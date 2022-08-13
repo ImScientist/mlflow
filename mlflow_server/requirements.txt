@@ -1,0 +1,4 @@
+gcloud==0.18.3
+google-cloud-storage==2.5.0
+mlflow==1.27.0
+psycopg2==2.9.3

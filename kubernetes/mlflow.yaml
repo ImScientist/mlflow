@@ -1,0 +1,108 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "mlflow-server-deployment"
+  labels:
+    app: "mlflow-server-deployment"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: "mlflow-server"
+  template:
+    metadata:
+      name: "mlflow-server"
+      labels:
+        app: "mlflow-server"
+    spec:
+      containers:
+        - name: "mlflow-server-container"
+          image: "eu.gcr.io/development-env-ta/mlflow:0.1"
+          env:
+            - name: "ARTIFACTS_STORE_URI"
+              valueFrom:
+                configMapKeyRef:
+                  name: "mlflow-config"
+                  key: "artifacts_store_uri"
+            - name: "SQL_USR"
+              valueFrom:
+                secretKeyRef:
+                  name: "mlflow-secret"
+                  key: "sql_usr"
+            - name: "SQL_PWD"
+              valueFrom:
+                secretKeyRef:
+                  name: "mlflow-secret"
+                  key: "sql_pwd"
+            - name: "SQL_DB"
+              valueFrom:
+                secretKeyRef:
+                  name: "mlflow-secret"
+                  key: "sql_db"
+            - name: "GOOGLE_APPLICATION_CREDENTIALS"
+              value: "/var/run/secrets/gcs-auth"
+          volumeMounts:
+            - name: "mlflow-secret-volume"
+              mountPath: "/var/run/secrets"
+              readOnly: true
+            - name: "mlflow-config-volume"
+              mountPath: "/var/run/config"
+              readOnly: true
+          ports:
+            - containerPort: 5000
+          command: [ "mlflow" ]
+          args: [
+              "server",
+              "--host=0.0.0.0",
+              "--default-artifact-root=$(ARTIFACTS_STORE_URI)",
+              "--backend-store-uri=postgresql://$(SQL_USR):$(SQL_PWD)@localhost:5432/$(SQL_DB)",
+              "--serve-artifacts"
+          ]
+        - name: "cloud-sql-proxy-container"
+          image: "gcr.io/cloudsql-docker/gce-proxy:1.31.2"
+          env:
+            - name: "SQL_INSTANCE_CONNECTION_NAME"
+              valueFrom:
+                configMapKeyRef:
+                  name: "mlflow-config"
+                  key: "sql_instance_connection_name"
+          volumeMounts:
+            - name: "mlflow-secret-volume"
+              mountPath: "/var/run/secrets"
+              readOnly: true
+            - name: "mlflow-config-volume"
+              mountPath: "/var/run/config"
+              readOnly: true
+          ports:
+            - containerPort: 5432
+          command: [ "/cloud_sql_proxy" ]
+          args: [
+              "-instances=$(SQL_INSTANCE_CONNECTION_NAME)=tcp:0.0.0.0:5432",
+              "-credential_file=/var/run/secrets/csql-auth"
+          ]
+      volumes:
+        - name: "mlflow-secret-volume"
+          secret:
+            secretName: "mlflow-secret"
+        - name: "mlflow-config-volume"
+          configMap:
+            name: "mlflow-config"
+
+
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "mlflow-server-service"
+  labels:
+    app: "mlflow-server-service"
+spec:
+  type: "LoadBalancer"
+  selector:
+    app: "mlflow-server"
+  ports:
+    - name: "http"
+      protocol: "TCP"
+      port: 8080
+      targetPort: 5000
