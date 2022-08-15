@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: "mlflow-server-container"
-          image: "eu.gcr.io/development-env-ta/mlflow:0.1"
+          image: "gcr.io/ai-mlflow/mlflow:1.0.0"
           env:
             - name: "ARTIFACTS_STORE_URI"
               valueFrom:
