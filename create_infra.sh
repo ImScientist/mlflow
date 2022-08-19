@@ -10,17 +10,8 @@ echo """
 #  - Container registry with the mlflow image in `mlflow_server`   #
 ####################################################################
 """
-
-INSTANCE_NAME=mlflow-backend
-REGION=europe-west3
-TAG_NAME=1.0.0
-
-
 PROJECT_ID=$(gcloud config list --format='value(core.project)')
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
-RAND_NUMBER=$(openssl rand -hex 12)
-BUCKET_NAME="artifacts-${RAND_NUMBER}"
-SQL_PWD=$(openssl rand -hex 12)
 
 
 
@@ -46,7 +37,7 @@ gsutil mb gs://$BUCKET_NAME
 echo """
 Create backend DB ...
 """
-gcloud sql instances create $INSTANCE_NAME \
+gcloud sql instances create $SQL_INSTANCE_NAME \
   --database-version=POSTGRES_9_6 \
   --tier db-f1-micro \
   --storage-size=10 \
@@ -60,7 +51,6 @@ Create a service account with GCS access
 Create a key that will be stored in mlflow_credentials ...
 """
 acc_name=gcs-access
-GCS_CREDENTIALS=".mlflow_credentials/${acc_name}.json"
 
 gcloud iam service-accounts create ${acc_name}
 
@@ -78,7 +68,6 @@ Create a service account with cloud SQL access
 Create a key that will be stored in mlflow_credentials ...
 """
 acc_name=csql-access
-CSQL_CREDENTIALS="$(echo ~)/.mlflow_credentials/${acc_name}.json"
 
 gcloud iam service-accounts create ${acc_name}
 
@@ -96,7 +85,6 @@ Create a service account with cloud container registry access
 Create a key that will be stored in mlflow_credentials ...
 """
 acc_name=gcr-access
-GCR_CREDENTIALS="$(echo ~)/.mlflow_credentials/${acc_name}.json"
 
 gcloud iam service-accounts create ${acc_name}
 

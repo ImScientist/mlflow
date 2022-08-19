@@ -1,153 +1,86 @@
-# mlflow on Kubernetes
+# mlflow on Kubernetes (WIP)
 
-Setup mlflow server with PostgreSQL DB (Google cloud) as backend and Google cloud storage as artifact storage.
+Setup mlflow server on Kubernetes with PostgreSQL DB (Google cloud) as backend and Google cloud storage as artifact
+storage.
 
-### mlflow server
+![Architecture](mlflow.png)
 
-- Create a container that is running the mlflow server.
-  ```shell
-  docker build -t imscientist/mlflow:0.1 .
+### Create infrastructure
 
-  docker run -it --rm --name mlflow_test -p 5000:5000 \
-    imscientist/mlflow:0.1 /bin/bash -c "mlflow server --host 0.0.0.0"
-  ```
+You have to create the following resources in Google cloud:
 
-### Kubernetes (local tests)
+- Bucket in cloud storage that will be used as artifact storage
+- PostreSQL DB in cloud SQL
+- Container registry (GCR) with the mlflow image defined in `mlflow_server/Dockerfile`
+- Service account (and json-key) with access to GCS
+- Service account (and json-key) with access to cloud SQL
+- Service account (and json-key) with access to GCR (necessary only flor local tests)
 
-- Check that using the `docker-desktop` context
-- Make sure that you can push images to the GCR:
-    - initialize the gcloud account with `gcloud init`
-    - update docker config with `gcloud auth configure-docker`
-    - Push the mlflow server image to GCR (or use `cloudbuild)`:
-      ```shell
-      gcloud init
-      gcloud auth configure-docker
-      
-      export PROJECT_ID=$(gcloud config list project --format "value(core.project)")
-      export TAG_NAME=1.0.0
-      IMAGE_URI="eu.gcr.io/{$PROJECT_ID}/mlflow:${TAG_NAME}"
-
-      docker build -f mlflow_server/Dockerfile -t $IMAGE_URI mlflow_server
-      docker push $IMAGE_URI
-      
-      # OR using cloudbuild
-      gcloud builds submit mlflow_server \
-        --config mlflow_server/cloudbuild.yaml \
-        --substitutions=TAG_NAME=$TAG_NAME
-      ```
-
-- Create the following resources in Google cloud:
-    - Bucket in cloud storage that will be used as artifact storage
-    - PostreSQL DB in cloud SQL
-    - Service account (and json-key) with access to GCS
-    - Service account (and json-key) with access to cloud SQL
-    - Container registry with the mlflow image defined in `mlflow_server/Dockerfile`
-
-  To run the script below you need to have [gsutil](https://cloud.google.com/storage/docs/gsutil)
-  , [gcloud](https://cloud.google.com/sdk/gcloud) and [OpenSSL]() CLIs installed (information about the creation of the
-  same resources with Terraform will be added later):
-  ```shell
-  chmod +x create_infra.sh
-  ./create_infra.sh
-  ```
-
-- Create the following kubernetes components:
-    - Kubernetes Secret that holds the sensitive access credentials to the cloud resources
-    - Kubernetes Configmap that holds project-dependent environment variables
-    - Kubernetes Deployment where each pod holds two containers:
-        - cloud sql auth proxy container that creates a secure connection to the PostgreSQL DB
-        - mlflow server that connects to the PostgreSQL DB via the cloud sql auth proxy
-
-  To achieve this we have to update the following key-value pairs:
-    - artifacts_store_uri=`gs://${BUCKET_NAME}` in `kubernetes/configmap.yaml`
-    - sql_instance_connection_name=`${PROJECT_ID}:${REGION}:${INSTANCE_NAME}` in `kubernetes/configmap.yaml`
-    - `spec.template.spec.containers[mlflow-server-container].image` = `gcr.io/${PROJECT_ID}/mlflow:${$TAG_NAME}"`
-      in `kubernetes/mlflow.yaml`
-      
-  For a local or a gcloud deployment execute:
-  ```shell
-  # Make sure that you have set the right kubernetes context
-  # TODO: create the cluster...
+You can create them with `./create_infra.sh`. To run the script below you need to
+have [gsutil](https://cloud.google.com/storage/docs/gsutil), [gcloud](https://cloud.google.com/sdk/gcloud) and [OpenSSL]() CLIs installed.
+```shell
+# Setup environment variables
+echo """
+  export REGION=europe-west3
+  export TAG_NAME=1.0.0
+  export BUCKET_NAME="artifacts-$(openssl rand -hex 12)"
+  export SQL_INSTANCE_NAME=mlflow-backend
+  export SQL_PWD=$(openssl rand -hex 12)
   
-  chmod +x ./kubernetes.sh
-  ./kubernetes.sh local|gcloud
-  ```
-    - To test if the Mflow server is running you can run the experiment
-      ```shell
-      python test/train.py
-      ```
-      and verify that the results are logged in `localhost:8080`.
-    - Destroy the kubernetes resources:
-      ```shell
-      kubectl -n mlflow delete secret mlflow-secret
-      kubectl -n mlflow delete configmap mlflow-config
-      kubectl -n mlflow delete deployment mlflow-server-deployment
-      kubectl -n mlflow delete service mlflow-server-service
-      ```
+  export GCS_CREDENTIALS=".mlflow_credentials/gcs-access.json"
+  export CSQL_CREDENTIALS=".mlflow_credentials/csql-access.json"
+  export GCR_CREDENTIALS=".mlflow_credentials/gcr-access.json"
+""" > .env
 
-### Kubernetes (Google cloud)
+source .env
 
-- In addition to all components that were created in the previous section we will need:
-    - a static IP
-    - authentication (preferably with active directory)
-    - most likely, the problem with pulling images from GCR won't be present so we can avoid the creation
-      of `gcr-io-secret`.
+# gcloud configuration
+gcloud init
 
-- Cluster creation:
-  ```shell
-  gcloud beta container --project "ai-mlflow" clusters create "cluster-1" \
-    --zone "europe-west3-a" \
-    --no-enable-basic-auth \
-    --cluster-version "1.22.10-gke.600" \
-    --release-channel "None" \
-    --machine-type "e2-micro" \
-    --image-type "COS_CONTAINERD" \
-    --disk-type "pd-standard" \
-    --disk-size "50" \
-    --metadata disable-legacy-endpoints=true \
-    --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" \
-    --max-pods-per-node "110" \
-    --num-nodes "3" \
-    --logging=SYSTEM,WORKLOAD \
-    --monitoring=SYSTEM \
-    --enable-ip-alias \
-    --network "projects/ai-mlflow/global/networks/default" \
-    --subnetwork "projects/ai-mlflow/regions/europe-west3/subnetworks/default" \
-    --no-enable-intra-node-visibility \
-    --default-max-pods-per-node "110" \
-    --no-enable-master-authorized-networks \
-    --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver \
-    --enable-autoupgrade \
-    --enable-autorepair \
-    --max-surge-upgrade 1 \
-    --max-unavailable-upgrade 0 \
-    --enable-shielded-nodes \
-    --node-locations "europe-west3-a"
-  ```
-    - Push all custom docker images to GCR:
-      ```shell
-      gcloud builds submit mlflow_server \
-        --config mlflow_server/cloudbuild.yaml \
-        --substitutions=TAG_NAME=$TAG_NAME
-      ```
-    - Create all cluster components except the docker-registry secret:
-      ```shell
-      # Change the kubernetes context
-      gcloud container clusters get-credentials cluster-1 \
-        --zone europe-west3-a \
-        --project $PROJECT_ID
-  
-      kubectl create secret generic mlflow-secret \
-        --from-file=csql-auth=$CSQL_CREDENTIALS \
-        --from-file=gcs-auth=$GCS_CREDENTIALS \
-        --from-literal=sql_usr=postgres \
-        --from-literal=sql_pwd=$SQL_PWD \
-        --from-literal=sql_db=postgres
-  
-      kubectl create -f kubernetes/configmap.yaml
-  
-      kubectl create -f kubernetes/mlflow.yaml
-      ```
+# Create infrastructure
+chmod +x create_infra.sh
+./create_infra.sh
+```
+
+### Kubernetes deployment
+
+You have to create the following kubernetes components:
+- Kubernetes Secret that holds the sensitive access credentials to the cloud resources
+- Kubernetes Configmap that holds project-dependent environment variables
+- Kubernetes Deployment where each pod holds two containers:
+  - cloud sql auth proxy container that creates a secure connection to the PostgreSQL DB
+  - mlflow server that connects to the PostgreSQL DB via the cloud sql auth proxy
+
+To achieve this we have to update the `.yaml` files in `kubernetes` folder:
+
+| file  | key  |  value |
+|---|---|---|
+| kubernetes/configmap.yaml  |  artifacts_store_uri | gs://${BUCKET_NAME}  |
+| kubernetes/configmap.yaml  |  sql_instance_connection_name |  ${PROJECT_ID}:${REGION}:${SQL_INSTANCE_NAME} |
+| kubernetes/mlflow.yaml  |  [mlflow-server-container].image |  gcr.io/${PROJECT_ID}/mlflow:${TAG_NAME} |
+
+You can test the service with Docker Desktop or deploy it on a Kubernetes cluster in Google cloud:
+- For local deployment you have to:
+  - check that you are using the `docker-desktop` context
+  - make sure that you have access to the images that you have stored in GCR. You have to create and utilize a docker-registry secret.
+
+- For a deployment on a Kubernetes cluster in Google cloud you have to:
+  - create the cluster manually (I cannot automate that part yet)
+  - get static IP (not yet done) and limit the unauthorized access (not yet done) 
+
+In both cases execute:
+```shell
+chmod +x kubernetes.sh
+
+# local deployment 
+./kubernetes.sh local
+
+# gcloud deployment
+./kubernetes.sh gcloud
+```
+
+To test if the Mflow server is running you can run the experiment `python test/train.py` and verify that the results are logged in `localhost:8080`.
+
 
 ### Resources
 
