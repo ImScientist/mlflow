@@ -55,9 +55,9 @@ To achieve this we have to update the `.yaml` files in `kubernetes` folder:
 
 | file  | key  |  value |
 |---|---|---|
-| kubernetes/configmap.yaml  |  artifacts_store_uri | gs://${BUCKET_NAME}  |
-| kubernetes/configmap.yaml  |  sql_instance_connection_name |  ${PROJECT_ID}:${REGION}:${SQL_INSTANCE_NAME} |
-| kubernetes/mlflow.yaml  |  [mlflow-server-container].image |  gcr.io/${PROJECT_ID}/mlflow:${TAG_NAME} |
+| kubernetes/configmap.yaml  |  artifacts_store_uri | `gs://${BUCKET_NAME}`  |
+| kubernetes/configmap.yaml  |  sql_instance_connection_name |  `${PROJECT_ID}:${REGION}:${SQL_INSTANCE_NAME}` |
+| kubernetes/mlflow.yaml  |  [mlflow-server-container].image |  `gcr.io/${PROJECT_ID}/mlflow:${TAG_NAME}` |
 
 You can test the service with Docker Desktop or deploy it on a Kubernetes cluster in Google cloud:
 - For local deployment you have to:
