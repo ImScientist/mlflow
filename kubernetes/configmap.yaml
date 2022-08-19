@@ -1,0 +1,8 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "mlflow-config"
+data:
+  artifacts_store_uri: "gs://artifacts-ai-mlflow/artifacts"
+  sql_instance_connection_name: "ai-mlflow:europe-west3:mlflow-backend"
