@@ -9,12 +9,9 @@ try_to_log_to_remote_server = True
 direct_gcs_access = True
 
 if direct_gcs_access:
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = \
-        '/Users/ivanova/.mlflow_credentials/gcs-access.json'
-
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.environ['GCS_CREDENTIALS']
 
 if try_to_log_to_remote_server:
-    # mlflow.set_tracking_uri("http://127.0.0.1:5000")
     mlflow.set_tracking_uri("http://127.0.0.1:8080")
     mlflow.set_experiment("ex_001")
 

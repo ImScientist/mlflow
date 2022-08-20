@@ -1,14 +1,15 @@
 #!/usr/bin/env sh
 
 echo """
-####################################################################
-# Create (locally) the following kubernetes (K) components:        #
-#  - K-Secret that holds access credentials to the cloud resources #
-#  - K-Configmap that holds project-dependent env variables        #
-#  - K-Deployment where each pod holds two containers:             #
-#     - cloud sql auth proxy that connects to the PostgreSQL DB    #
-#     - mlflow server                                              #
-####################################################################
+######################################################################
+# Create (locally) the following kubernetes (K) components:          #
+#  - K-Secret that gives access to images stored in GCR              #
+#  - K-Secret that holds access credentials to other cloud resources #
+#  - K-Configmap that holds project-dependent env variables          #
+#  - K-Deployment where each pod holds two containers:               #
+#     - cloud sql auth proxy that connects to the PostgreSQL DB      #
+#     - mlflow server                                                #
+######################################################################
 """
 
 [ "$1" != "local" ] && [ "$2" != "gcloud" ] && echo "
@@ -27,9 +28,14 @@ if [ "$1" == "local" ]; then
   Configure local K-components to access images stored in GCR...
   """
   kubectl -n mlflow create secret docker-registry gcr-io-secret \
-    --docker-server=gcr.io \
-    --docker-username=_json_key \
-    --docker-password="$(cat $GCR_CREDENTIALS)"
+    --from-literal=docker-server=gcr.io \
+    --from-literal=docker-username=_json_key \
+    --from-file=docker-password=$GCR_CREDENTIALS
+
+  #  kubectl -n mlflow create secret docker-registry gcr-io-secret \
+  #    --docker-server=gcr.io \
+  #    --docker-username=_json_key \
+  #    --docker-password="$(cat $GCR_CREDENTIALS)"
 
   # Patch the default service account with the imagePullSecrets configuration
   kubectl -n=mlflow patch serviceaccount default \
