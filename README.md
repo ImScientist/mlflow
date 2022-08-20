@@ -27,6 +27,7 @@ echo """
   export SQL_INSTANCE_NAME=mlflow-backend
   export SQL_PWD=$(openssl rand -hex 12)
   
+  # locations of all credentials
   export GCS_CREDENTIALS=".mlflow_credentials/gcs-access.json"
   export CSQL_CREDENTIALS=".mlflow_credentials/csql-access.json"
   export GCR_CREDENTIALS=".mlflow_credentials/gcr-access.json"
@@ -62,7 +63,7 @@ To achieve this we have to update the `.yaml` files in `kubernetes` folder:
 You can test the service with Docker Desktop or deploy it on a Kubernetes cluster in Google cloud:
 - For local deployment you have to:
   - check that you are using the `docker-desktop` context
-  - make sure that you have access to the images that you have stored in GCR. You have to create and utilize a docker-registry secret.
+  
 
 - For a deployment on a Kubernetes cluster in Google cloud you have to:
   - create the cluster manually (I cannot automate that part yet)
@@ -79,7 +80,7 @@ chmod +x kubernetes.sh
 ./kubernetes.sh gcloud
 ```
 
-To test if the Mflow server is running you can run the experiment `python test/train.py` and verify that the results are logged in `localhost:8080`.
+To test if the Mflow server is running you can run the experiment `python test/train.py` and verify that the results are logged in `localhost:8080`. In the experiment definition you will see that we are using the `GCS_CREDENTIALS` to store the artifacts in GCS.
 
 
 ### Resources

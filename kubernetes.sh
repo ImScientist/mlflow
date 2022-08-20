@@ -1,14 +1,15 @@
 #!/usr/bin/env sh
 
 echo """
-####################################################################
-# Create (locally) the following kubernetes (K) components:        #
-#  - K-Secret that holds access credentials to the cloud resources #
-#  - K-Configmap that holds project-dependent env variables        #
-#  - K-Deployment where each pod holds two containers:             #
-#     - cloud sql auth proxy that connects to the PostgreSQL DB    #
-#     - mlflow server                                              #
-####################################################################
+######################################################################
+# Create (locally) the following kubernetes (K) components:          #
+#  - K-Secret that gives access to images stored in GCR              #
+#  - K-Secret that holds access credentials to other cloud resources #
+#  - K-Configmap that holds project-dependent env variables          #
+#  - K-Deployment where each pod holds two containers:               #
+#     - cloud sql auth proxy that connects to the PostgreSQL DB      #
+#     - mlflow server                                                #
+######################################################################
 """
 
 [ "$1" != "local" ] && [ "$2" != "gcloud" ] && echo "
