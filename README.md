@@ -1,4 +1,4 @@
-# mlflow on Kubernetes (WIP)
+# mlflow on Kubernetes
 
 Setup mlflow server on Kubernetes with PostgreSQL DB (Google cloud) as backend and Google cloud storage as artifact
 storage.

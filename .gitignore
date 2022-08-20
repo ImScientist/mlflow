@@ -1,2 +1,11 @@
 .idea/*
 .env
+
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+
+# You might have to remove this
+*.terraform.lock.hcl
