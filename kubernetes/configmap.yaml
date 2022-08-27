@@ -4,5 +4,5 @@ kind: "ConfigMap"
 metadata:
   name: "mlflow-config"
 data:
-  artifacts_store_uri: "gs://artifacts-4238717282752847c3d58ebe"
-  sql_instance_connection_name: "ai-mlflow-01:europe-west3:mlflow-backend"
+  artifacts_store_uri: "gs://artifacts-4238717282752847c3d58e44"
+  sql_instance_connection_name: "ai-mlflow-04:europe-west3:mlflow-backend"

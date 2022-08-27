@@ -1,7 +1,8 @@
 variable "project" {
-  default = "ai-mlflow-03"
+  default = "ai-mlflow-04"
 }
 
+// change to location
 variable "region" {
   default = "europe-west3"
 }
