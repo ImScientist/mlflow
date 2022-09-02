@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: "mlflow-server-container"
-          image: "gcr.io/ai-mlflow-04/mlflow:1.0.0"
+          image: "gcr.io/ai-mlflow-06/mlflow:1.0.0"
           env:
             - name: "ARTIFACTS_STORE_URI"
               valueFrom:
@@ -79,11 +79,8 @@ spec:
           command: [ "/cloud_sql_proxy" ]
           args: [
               "-instances=$(SQL_INSTANCE_CONNECTION_NAME)=tcp:0.0.0.0:5432",
-              "-credential_file=/var/run/secrets/csql-auth"
+              "-credential_file=/var/run/secrets/g-auth"
           ]
-      #      imagePullSecrets:
-      #        - name: "gcr-io-secret-2"
-      #        - name: "gcr-io-secret"
       volumes:
         - name: "mlflow-secret-volume"
           secret:

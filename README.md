@@ -66,6 +66,12 @@ You can test the service with Docker Desktop or deploy it on a Kubernetes cluste
   
 
 - For a deployment on a Kubernetes cluster in Google cloud you have to:
+  - check that you are using the right context. You can switch to the right one by executing:
+    ```shell
+    gcloud container clusters get-credentials < cluster_name > \
+        --zone  < zone > \
+        --project < project_id >
+    ```
   - create the cluster manually (I cannot automate that part yet)
   - get static IP (not yet done) and limit the unauthorized access (not yet done) 
 

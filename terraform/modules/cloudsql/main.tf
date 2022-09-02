@@ -10,3 +10,14 @@ resource "google_sql_database_instance" "main" {
     disk_size         = 10
   }
 }
+
+resource "random_password" "password" {
+  length           = 32
+  special          = false
+}
+
+resource "google_sql_user" "mlflow" {
+  name     = "mlflow"
+  instance = google_sql_database_instance.main.name
+  password = random_password.password.result
+}

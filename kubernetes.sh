@@ -17,11 +17,9 @@ No valid execution environment (local or gcloud) is provided!
 Usage: ./kubernetes_local.sh local|gcloud
 " && exit 1
 
-
+PROJECT_ID=$(gcloud config list --format='value(core.project)')
 
 kubectl create namespace mlflow
-
-
 
 if [ "$1" == "local" ]; then
   echo """
@@ -39,10 +37,8 @@ if [ "$1" == "local" ]; then
 
   # Patch the default service account with the imagePullSecrets configuration
   kubectl -n=mlflow patch serviceaccount default \
-        -p '{"imagePullSecrets": [{"name": "gcr-io-secret"}]}'
+    -p '{"imagePullSecrets": [{"name": "gcr-io-secret"}]}'
 fi
-
-
 
 echo """
 Create K-secret, K-configmap, ml-server deployment and service...
@@ -54,6 +50,10 @@ kubectl -n mlflow create secret generic mlflow-secret \
   --from-literal=sql_pwd=$SQL_PWD \
   --from-literal=sql_db=postgres
 
-kubectl -n mlflow create -f kubernetes/configmap.yaml
+kubectl -n mlflow create configmap mlflow-config \
+  --from-literal=artifacts_store_uri="gs://${BUCKET_NAME}" \
+  --from-literal=sql_instance_connection_name="${PROJECT_ID}:${REGION}:${SQL_INSTANCE_NAME}"
+
+#kubectl -n mlflow create -f kubernetes/configmap.yaml
 
 kubectl -n mlflow create -f kubernetes/mlflow.yaml

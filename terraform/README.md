@@ -1,6 +1,6 @@
 ### Create infrastructure with terraform (WIP)
 
-- THings to automate:
+- Things to automate:
   - setup password of the default `postgres` user: at the moment, we change them manually and terraform does not detect any state change.
   
 - Install the terraform version manager. We will work with version `1.2.7`: 
