@@ -4,9 +4,12 @@ provider "google" {
   zone    = var.zone
 }
 
-provider "random" {}
-
 data "google_client_config" "default" {}
+
+resource "random_string" "random" {
+  length  = 16
+  special = false
+}
 
 resource "google_project_service" "iam" {
   for_each           = toset(["iam.googleapis.com", "container.googleapis.com", "cloudbuild.googleapis.com", "containerregistry.googleapis.com", "sqladmin.googleapis.com"])
@@ -17,7 +20,7 @@ resource "google_project_service" "iam" {
 
 module "mlfow_artifacts_storage" {
   source   = "./modules/storage"
-  name     = "artifacts-4238717282752847c3d58999"
+  name     = "artifacts-${random_string.random.result}"
   location = var.region
 }
 
@@ -99,4 +102,3 @@ resource "kubernetes_config_map" "mlflow_configmap" {
 
   depends_on = [module.container_cluster, kubernetes_namespace.mlflow]
 }
-
