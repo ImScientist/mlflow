@@ -63,7 +63,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member "serviceAccount:${acc_name}@${PROJECT_ID}.iam.gserviceaccount.com" \
   --role "roles/cloudsql.admin"
 
-gcloud iam service-accounts keys create $GCS_CREDENTIALS \
+gcloud iam service-accounts keys create $MLFLOW_CREDENTIALS \
       --iam-account=${acc_name}@${PROJECT_ID}.iam.gserviceaccount.com
 
 

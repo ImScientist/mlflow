@@ -58,11 +58,6 @@ provider "kubernetes" {
 resource "kubernetes_namespace" "mlflow" {
   metadata {
     name = "mlflow"
-
-    labels = {
-      mylabel = "mlflow-namespace"
-    }
-
   }
 
   depends_on = [module.container_cluster]

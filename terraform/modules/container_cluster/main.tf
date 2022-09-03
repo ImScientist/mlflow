@@ -1,5 +1,5 @@
 resource "google_container_cluster" "primary" {
-  name                     = "gcc-ai"
+  name                     = "gcc-mlflow"
   location                 = var.zone // pick region or zone
   remove_default_node_pool = true
   initial_node_count       = 1
