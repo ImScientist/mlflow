@@ -61,9 +61,10 @@ The kubernetes cluster contains:
   As a result the image `gcr.io/${PROJECT_ID}/mlflow:${TAG_NAME}` should be created.
   
 
-- The remaining components that have to be created are described in `kubernetes/mlflow.yaml`. We have to change the image of the `mlflow-server-container` (line 21) to point to the image that we have created in the previous step. We can use `kubectl` to crete the missing components:
+- The remaining components that have to be created are described in `kubernetes/mlflow.yaml`. We have to change the image of the `mlflow-server-container` (line 21) to point to the image that we have created in the previous step. We can use `kubectl` to crete the missing components (alternatively, you can also use `helm`, as described in [helm/README.md](helm/README.md):
   ```shell
   # change the kubectl context (gcc-mlflow: name of the container cluster)
+  # get zone and project from ./terrafrom/variables.tf
   gcloud container clusters get-credentials gcc-mlflow \
     --zone  < zone > \
     --project < project_id >

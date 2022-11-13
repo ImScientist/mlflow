@@ -1,4 +1,4 @@
-### Create infrastructure with terraform (WIP)
+### Create infrastructure with terraform
   
 - Install the terraform version manager. We will work with version `1.2.7`: 
   ```shell

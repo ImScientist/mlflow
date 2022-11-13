@@ -1,3 +1,5 @@
+*.DS_Store
+*junk.*
 .idea/*
 .env
 
