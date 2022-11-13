@@ -1,5 +1,5 @@
 variable "project" {
-  default = "ai-mlflow-06"
+  default = "mlflow-07"
 }
 
 variable "region" {

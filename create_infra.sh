@@ -51,7 +51,6 @@ Create a service account with cloud SQL access
 Create a key that will be stored locally in ./mlflow_credentials ...
 """
 acc_name=mlflow-svc-account
-#acc_name=gcs-access
 
 gcloud iam service-accounts create ${acc_name}
 

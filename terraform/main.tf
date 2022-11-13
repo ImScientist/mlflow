@@ -9,6 +9,7 @@ data "google_client_config" "default" {}
 resource "random_string" "random" {
   length  = 16
   special = false
+  upper   = false
 }
 
 resource "google_project_service" "iam" {

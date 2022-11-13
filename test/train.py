@@ -2,7 +2,6 @@ import os
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
-import mlflow
 import mlflow.sklearn
 
 try_to_log_to_remote_server = True
